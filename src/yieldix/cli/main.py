@@ -1,0 +1,131 @@
+"""
+Yieldix Command Line Interface (CLI).
+Enterprise execution, lead testing, L2 human review, and Monte Carlo simulation.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import json
+import random
+from decimal import Decimal
+
+import click
+
+from yieldix.core.engine import YieldixEngine
+from yieldix.core.types import InboundLeadPayload, LeadSource, PipelineConfig
+from yieldix.telemetry.reporter import MonthlyReportGenerator
+
+
+@click.group()
+@click.version_option("16.0.0", prog_name="yieldix")
+def main():
+    """🦄 Yieldix: Autonomous B2B Revenue Engine CLI."""
+
+
+@main.command(name="status")
+@click.option("--tenant", default="cust_enterprise_01", help="Tenant ID")
+def status(tenant: str):
+    """Displays engine and circuit breaker status."""
+    engine = YieldixEngine(PipelineConfig(tenant_id=tenant))
+    cycle = asyncio.run(engine.run_daily_cycle())
+    click.echo(f"=== YIELDIX ENGINE STATUS: {tenant} ===")
+    click.echo(f"Active Components: {', '.join(cycle['active_components'])}")
+    click.echo(f"Shed Components: {', '.join(cycle['shed_components']) if cycle['shed_components'] else 'None'}")
+    click.echo(f"Circuit Breaker Tripped: {cycle['circuit_breaker_tripped']}")
+
+
+@main.command(name="ingest")
+@click.option("--tenant", default="cust_enterprise_01", help="Tenant ID")
+@click.option("--name", required=True, help="Contact name")
+@click.option("--phone", required=True, help="Contact phone")
+@click.option("--intent", default="Kurumsal B2B teklif talebi", help="Lead intent")
+def ingest(tenant: str, name: str, phone: str, intent: str):
+    """Ingests a lead and triggers the sub-60s speed-to-lead flow."""
+    engine = YieldixEngine(PipelineConfig(tenant_id=tenant))
+    lead = InboundLeadPayload(
+        tenant_id=tenant,
+        lead_id=f"lead_{int(random.random()*10000)}",
+        contact_name=name,
+        contact_phone=phone,
+        source=LeadSource.WEB_FORM,
+        intent_summary=intent,
+    )
+    result = asyncio.run(engine.ingest_inbound_lead(lead))
+    click.echo(json.dumps(result, indent=2, ensure_ascii=False))
+
+
+@main.command(name="simulate")
+@click.option("--runs", default=10000, help="Number of Monte Carlo simulation runs")
+@click.option("--retainer", default="2500.00", help="Monthly retainer in USD")
+def simulate(runs: int, retainer: str | float):
+    """Executes N=10,000 Monte Carlo financial stress simulation."""
+    retainer_dec = Decimal(str(retainer))
+    click.echo(f"Running Monte Carlo simulation ({runs} runs, Retainer=${retainer_dec:.2f})...")
+    profits = []
+    base_cogs = Decimal("90.00")
+    for _ in range(runs):
+        leads = max(100.0, random.gauss(450.0, 90.0))
+        api_multiplier = Decimal(str(round(random.uniform(0.85, 1.40), 4)))
+        escalation_pct = max(1.0, min(30.0, random.gauss(8.5, 3.2)))
+        lead_ratio = Decimal(str(round(leads / 450.0, 4)))
+        variable_cogs = base_cogs * lead_ratio * api_multiplier
+        penalty = Decimal("0.00")
+        if escalation_pct > 20.0:
+            esc_excess = Decimal(str(round((escalation_pct - 20.0) / 10.0, 4)))
+            penalty = Decimal("150.00") * esc_excess
+        net_profit = retainer_dec - (variable_cogs + penalty)
+        profits.append(net_profit)
+
+    profits.sort()
+    p5 = profits[int(runs * 0.05)]
+    p50 = profits[int(runs * 0.50)]
+    p95 = profits[int(runs * 0.95)]
+    loss_count = sum(1 for p in profits if p <= Decimal("0.00"))
+
+    click.echo("=== SIMULATION RESULTS ===")
+    click.echo(f"P5 (Worst Case): ${p5:.2f}")
+    click.echo(f"P50 (Median):     ${p50:.2f} (Margin: %{(p50/retainer_dec)*100:.2f})")
+    click.echo(f"P95 (Best Case):  ${p95:.2f}")
+    click.echo(f"Loss Probability: %{(loss_count/runs)*100:.2f}")
+
+
+@main.command(name="report")
+@click.option("--tenant", default="cust_enterprise_01", help="Tenant ID")
+@click.option("--start", default="2026-10-01", help="Period start date")
+@click.option("--end", default="2026-10-31", help="Period end date")
+def report(tenant: str, start: str, end: str):
+    """Generates an Ed25519 signed monthly audit report card."""
+    engine = YieldixEngine(PipelineConfig(tenant_id=tenant))
+    # Ingest baseline transaction event
+    engine.kpi_collector.record_lead_processed("lead_demo", 32.5, is_sql=True, cost_try=Decimal("15.00"))
+    rep_gen = MonthlyReportGenerator()
+    rep = rep_gen.generate_signed_report(
+        tenant_id=tenant,
+        period_start=start,
+        period_end=end,
+        kpi_collector=engine.kpi_collector,
+        active_components=engine.config.enabled_components,
+    )
+    card = rep_gen.export_markdown_card(rep)
+    click.echo(card)
+
+
+@main.command(name="serve")
+@click.option("--host", default="127.0.0.1", help="Host interface to bind")
+@click.option("--port", default=8088, type=int, help="Port to listen on")
+@click.option("--no-block", is_flag=True, default=False, help="Launch non-blocking smoke run")
+def serve(host: str, port: int, no_block: bool = False):
+    """Launches the sovereign Yieldix web telemetry and cockpit server."""
+    from yieldix.server.app import create_server
+    click.echo(f"Starting Yieldix Cockpit on http://{host}:{port}")
+    server = create_server(host=host, port=port)
+    server.start(blocking=not no_block)
+    if no_block:
+        server.stop()
+
+
+
+if __name__ == "__main__":
+    main()
+

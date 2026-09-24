@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Yieldix Cockpit — Autonomous Enterprise B2B Revenue Engine</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Top Sovereign Operations Header -->
+  <header class="telemetry-header">
+    <div class="brand-block">
+      <div class="brand-badge">Y99</div>
+      <div>
+        <div class="brand-title">YIELDIX COCKPIT</div>
+        <div class="brand-subtitle">Autonomous B2B Revenue Engine &middot; 6 Cylinders &middot; RFC 8032 Attested</div>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="cockpit-nav">
+      <button class="nav-tab active" data-view="view-pipeline" title="Pipeline Telemetry [Press 1]">
+        <span class="nav-tab-icon">⚙️</span>
+        <span>6-Cylinder Pipeline</span>
+        <kbd class="kbd-badge">1</kbd>
+      </button>
+      <button class="nav-tab" data-view="view-l2-studio" title="L2 Outreach Studio [Press 2]">
+        <span class="nav-tab-icon">✍️</span>
+        <span>L2 Approval Studio</span>
+        <span class="nav-badge" id="navBadgeL2">3</span>
+        <kbd class="kbd-badge">2</kbd>
+      </button>
+      <button class="nav-tab" data-view="view-kpi-health" title="4-KPI & Circuit Breakers [Press 3]">
+        <span class="nav-tab-icon">📊</span>
+        <span>4-KPI &amp; Breakers</span>
+        <kbd class="kbd-badge">3</kbd>
+      </button>
+      <button class="nav-tab" data-view="view-crypto-benchmark" title="Ed25519 & Competitive Moat [Press 4]">
+        <span class="nav-tab-icon">🔐</span>
+        <span>Ed25519 &amp; Benchmark</span>
+        <kbd class="kbd-badge">4</kbd>
+      </button>
+    </nav>
+
+    <!-- Top Right Status & Action Controls -->
+    <div class="system-status-pills">
+      <div class="status-pill">
+        <span class="pill-dot pulsing" id="statusDot"></span>
+        <span>Engine: <strong class="mono" id="engineStatusText">ONLINE</strong></span>
+      </div>
+      <div class="status-pill">
+        <span class="pill-dot" style="background:#06b6d4; box-shadow: 0 0 8px #06b6d4;"></span>
+        <span>Tenant: <strong class="mono">sovereign-unicorn</strong></span>
+      </div>
+      <button class="btn-action" id="btnSimulateVoice" title="Simulate Inbound Voice Receptionist Lead">
+        <span>📞 Voice Lead</span>
+      </button>
+      <button class="btn-action btn-emerald" id="btnSimulateBatch" title="Simulate Pipeline Batch (5 Leads)">
+        <span>⚡ Simulate Batch</span>
+      </button>
+      <button class="btn-action btn-rose" id="btnEmergencyTrip" title="Trip/Reset Cold Email Circuit Breaker">
+        <span>🛡️ Trip Breaker</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Live Financial Telemetry Banner -->
+  <div class="evlp-ticker-bar">
+    <div class="ticker-metric">
+      <span class="ticker-label">PIPELINE EVLP:</span>
+      <span class="ticker-value mono text-emerald" id="tickerEvlp">$925,000.00</span>
+    </div>
+    <div class="ticker-divider"></div>
+    <div class="ticker-metric">
+      <span class="ticker-label">SPEED-TO-LEAD SLA:</span>
+      <span class="ticker-value mono text-cyan" id="tickerSpeedSla">99.4% (&lt;60s)</span>
+    </div>
+    <div class="ticker-divider"></div>
+    <div class="ticker-metric">
+      <span class="ticker-label">DELIVERABILITY:</span>
+      <span class="ticker-value mono text-emerald" id="tickerDeliverability">98.7%</span>
+    </div>
+    <div class="ticker-divider"></div>
+    <div class="ticker-metric">
+      <span class="ticker-label">CAC SAVINGS VS SDR:</span>
+      <span class="ticker-value mono text-amber" id="tickerSavings">+$34,800 / mo</span>
+    </div>
+    <div class="ticker-divider"></div>
+    <div class="ticker-metric" style="margin-left:auto;">
+      <span class="ticker-label">ON-CHAIN ATTESTATION:</span>
+      <span class="ticker-value mono" style="font-size:0.75rem; color:#94a3b8;" id="tickerSignerKey">Ed25519: 0x71c8...7884</span>
+    </div>
+  </div>
+
+  <!-- Main Container -->
+  <main class="cockpit-container">
+
+    <!-- VIEW 1: 6-CYLINDER PIPELINE -->
+    <section id="view-pipeline" class="view-panel active">
+      <div class="panel-header">
+        <div>
+          <h2 class="panel-title">6-Cylinder Autonomous Revenue Pipeline</h2>
+          <p class="panel-desc">Real-time telemetry across multi-channel B2B ingestion, qualification, outbound human gating, and inbox triage.</p>
+        </div>
+        <div class="panel-actions">
+          <button class="btn-action" id="btnRefreshPipeline">🔄 Refresh Telemetry</button>
+        </div>
+      </div>
+
+      <!-- 6 Cylinders Interactive Flow -->
+      <div class="cylinders-grid">
+        <!-- C1 -->
+        <div class="cylinder-card" id="cardC1">
+          <div class="cylinder-top">
+            <span class="cylinder-tag">CYLINDER 1</span>
+            <span class="status-badge badge-active">ACTIVE</span>
+          </div>
+          <h3 class="cylinder-name">7/24 Voice Receptionist</h3>
+          <p class="cylinder-meta">WebRTC &middot; ITU-T G.114 Opus &middot; 380ms Latency</p>
+          <div class="cylinder-stats">
+            <div class="stat-box">
+              <span class="stat-lbl">Active Calls</span>
+              <span class="stat-val mono" id="c1ActiveCalls">1</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-lbl">Mouth-to-Ear</span>
+              <span class="stat-val mono text-cyan" id="c1Latency">380 ms</span>
+            </div>
+          </div>
+          <div class="voice-waveform-box">
+            <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+            <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+            <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+          </div>
+          <div class="voice-canvas-wrap">
+            <canvas id="voiceCanvas" width="280" height="38"></canvas>
+          </div>
+        </div>
+
+        <!-- C2 -->
+        <div class="cylinder-card" id="cardC2">
+          <div class="cylinder-top">
+            <span class="cylinder-tag">CYLINDER 2</span>
+            <span class="status-badge badge-active">ACTIVE</span>
+          </div>
+          <h3 class="cylinder-name">60s Speed-to-Lead</h3>
+          <p class="cylinder-meta">MIT/HBR Decay Model &middot; Autonomous Outdial</p>
+          <div class="cylinder-stats">
+            <div class="stat-box">
+              <span class="stat-lbl">In Cadence</span>
+              <span class="stat-val mono" id="c2QueueLen">0</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-lbl">SLA Threshold</span>
+              <span class="stat-val mono text-emerald">&lt;60.0 s</span>
+            </div>
+          </div>
+          <div class="speed-progress-box">
+            <div class="progress-bar-fill" style="width: 87%;"></div>
+            <span class="progress-text mono">Avg Time: 52.4s (Pass)</span>
+          </div>
+        </div>
+
+        <!-- C3 -->
+        <div class="cylinder-card" id="cardC3">
+          <div class="cylinder-top">
+            <span class="cylinder-tag">CYLINDER 3</span>
+            <span class="status-badge badge-active">ACTIVE</span>
+          </div>
+          <h3 class="cylinder-name">Web Pre-Qualifier</h3>
+          <p class="cylinder-meta">Bayesian BANT &middot; Calendar Routing Engine</p>
+          <div class="cylinder-stats">
+            <div class="stat-box">
+              <span class="stat-lbl">Qual Rate</span>
+              <span class="stat-val mono text-emerald" id="c3QualRate">82.5%</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-lbl">Instant Meetings</span>
+              <span class="stat-val mono" id="c3Meetings">48</span>
+            </div>
+          </div>
+          <div class="tag-row">
+            <span class="mini-tag">Budget &gt; $25k</span>
+            <span class="mini-tag">Authority: CXO</span>
+          </div>
+        </div>
+
+        <!-- C4 -->
+        <div class="cylinder-card" id="cardC4">
+          <div class="cylinder-top">
+            <span class="cylinder-tag">CYLINDER 4</span>
+            <span class="status-badge badge-active">ACTIVE</span>
+          </div>
+          <h3 class="cylinder-name">CRM Reactivation</h3>
+          <p class="cylinder-meta">Closed-Lost Scanner &middot; Trigger Signal Engine</p>
+          <div class="cylinder-stats">
+            <div class="stat-box">
+              <span class="stat-lbl">Dormant Scanned</span>
+              <span class="stat-val mono" id="c4Scanned">124</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-lbl">Reactivated</span>
+              <span class="stat-val mono text-cyan" id="c4Reactivated">19</span>
+            </div>
+          </div>
+          <div class="tag-row">
+            <span class="mini-tag">Trigger: Tech Stack Shift</span>
+            <span class="mini-tag">Funding Rnd</span>
+          </div>
+        </div>
+
+        <!-- C5 -->
+        <div class="cylinder-card" id="cardC5">
+          <div class="cylinder-top">
+            <span class="cylinder-tag">CYLINDER 5</span>
+            <span class="status-badge badge-active" id="c5StatusBadge">ACTIVE</span>
+          </div>
+          <h3 class="cylinder-name">Cold Outreach (L2 Gate)</h3>
+          <p class="cylinder-meta">Human-in-the-Loop SDR &middot; RFC 8032 Signing</p>
+          <div class="cylinder-stats">
+            <div class="stat-box">
+              <span class="stat-lbl">Pending Review</span>
+              <span class="stat-val mono text-amber" id="c5Pending">3</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-lbl">Sent Today</span>
+              <span class="stat-val mono" id="c5Sent">0 / 100</span>
+            </div>
+          </div>
+          <div class="tag-row">
+            <span class="mini-tag">L2 Cryptographic Seal</span>
+            <span class="mini-tag">DMARC 100%</span>
+          </div>
+        </div>
+
+        <!-- C6 -->
+        <div class="cylinder-card" id="cardC6">
+          <div class="cylinder-top">
+            <span class="cylinder-tag">CYLINDER 6</span>
+            <span class="status-badge badge-active">ACTIVE</span>
+          </div>
+          <h3 class="cylinder-name">Inbox Triage &amp; Routing</h3>
+          <p class="cylinder-meta">Objection Handling &middot; Unsubscribe Opt-Out</p>
+          <div class="cylinder-stats">
+            <div class="stat-box">
+              <span class="stat-lbl">Triaged Today</span>
+              <span class="stat-val mono" id="c6Triaged">63</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-lbl">Positive Intent</span>
+              <span class="stat-val mono text-emerald" id="c6Positive">78.4%</span>
+            </div>
+          </div>
+          <div class="tag-row">
+            <span class="mini-tag">Auto-Escalation</span>
+            <span class="mini-tag">Zero Spam Risk</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Pipeline Execution Feed -->
+      <div class="stream-card">
+        <div class="stream-header">
+          <div class="stream-title">Live Pipeline Event Stream</div>
+          <span class="mono text-muted" style="font-size: 0.72rem;">WebSocket / Ingestion Bus</span>
+        </div>
+        <div class="stream-log-container mono" id="streamLogContainer">
+          <div class="log-entry log-info">[11:20:01] ENGINE INIT: Yieldix v1.0.0 initialized with tenant sovereign-unicorn-demo.</div>
+          <div class="log-entry log-success">[11:20:02] CRYPTO: Ed25519 public key loaded: 0x71c8...7884.</div>
+          <div class="log-entry log-info">[11:20:03] C5_COLD_EMAIL: 3 pending drafts queued for human SDR cryptographic sign-off.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 2: L2 APPROVAL STUDIO -->
+    <section id="view-l2-studio" class="view-panel">
+      <div class="panel-header">
+        <div>
+          <h2 class="panel-title">L2 Human Approval Studio</h2>
+          <p class="panel-desc">Strict zero-unverified cold email architecture. Review, edit personalization, and cryptographically sign outbound drafts before dispatch.</p>
+        </div>
+        <div class="panel-actions">
+          <span class="mono text-muted" style="font-size:0.8rem;">Daily Quota: <strong class="text-emerald" id="l2QuotaDisplay">100</strong> / day</span>
+        </div>
+      </div>
+
+      <div class="l2-workbench">
+        <!-- Drafts List (Left) -->
+        <div class="l2-list-pane">
+          <div class="pane-title">Pending Outreach Drafts (<span id="l2CountSpan">3</span>)</div>
+          <div class="draft-items-list" id="draftItemsList">
+            <!-- Dynamic items rendered by app.js -->
+          </div>
+        </div>
+
+        <!-- Draft Inspector (Right) -->
+        <div class="l2-detail-pane">
+          <div class="detail-header">
+            <div>
+              <span class="pane-tag" id="detailTaskTag">TASK-001</span>
+              <h3 class="detail-target" id="detailTargetCompany">Acme Aerospace Corp</h3>
+              <p class="detail-person mono" id="detailTargetPerson">Elena Rostova, VP of Avionics Procurement</p>
+            </div>
+            <div class="hash-badge mono" id="detailDigestBadge">
+              SHA-256: e8b9...3f12
+            </div>
+          </div>
+
+          <div class="detail-body-box">
+            <div class="field-label">Personalized Trigger Hook</div>
+            <div class="field-value text-cyan" id="detailHook">Noticed Acme's Q3 rollout of autonomous telemetry packages in Munich.</div>
+
+            <div class="field-label" style="margin-top:1rem;">Outreach Copy (Editable)</div>
+            <textarea class="edit-copy-area mono" id="editCopyArea" rows="6"></textarea>
+
+            <div class="field-label" style="margin-top:1rem;">Call to Action (CTA)</div>
+            <div class="field-value text-emerald" id="detailCta">Are you open to a brief 10-minute technical evaluation next Tuesday at 14:00 CET?</div>
+          </div>
+
+          <div class="detail-footer">
+            <div class="mono text-muted" style="font-size: 0.75rem;">
+              Reviewer: <strong class="text-light" id="reviewerName">SDR_Commander_Alpha</strong>
+            </div>
+            <div class="footer-actions">
+              <button class="btn-action btn-rose" id="btnRejectDraft" title="Reject Draft [Press R]">❌ Reject Draft <kbd class="kbd-btn">R</kbd></button>
+              <button class="btn-action btn-emerald" id="btnApproveDraft" title="Approve & Sign [Press A]">✍️ Approve &amp; Cryptographically Sign <kbd class="kbd-btn">A</kbd></button>
+            </div>
+          </div>
+
+          <!-- Signed Confirmation Box -->
+          <div class="signature-receipt mono" id="signatureReceipt" style="display:none;">
+            <div class="receipt-title">✅ Cryptographically Sealed &amp; Dispatched</div>
+            <div class="receipt-line">Task ID: <span id="recTaskId"></span></div>
+            <div class="receipt-line">SHA-256 Digest: <span id="recDigest"></span></div>
+            <div class="receipt-line">Ed25519 Sig: <span id="recSig" class="text-cyan"></span></div>
+            <button class="btn-action btn-copy" id="btnCopySignatureReceipt" style="margin-top:0.6rem; width:100%;">📋 Copy Attestation Receipt</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 3: 4-KPI HEALTHCARD & CIRCUIT BREAKERS -->
+    <section id="view-kpi-health" class="view-panel">
+      <div class="panel-header">
+        <div>
+          <h2 class="panel-title">4-KPI Executive SLA Healthcard &amp; Circuit Breakers</h2>
+          <p class="panel-desc">Real-time mathematical guarantee monitoring and automated component shedding fail-safes.</p>
+        </div>
+      </div>
+
+      <!-- 4 Core SLA Gauges -->
+      <div class="kpi-gauges-grid">
+        <!-- KPI 1 -->
+        <div class="gauge-card">
+          <div class="gauge-header">
+            <span class="gauge-title">Speed-to-Lead SLA</span>
+            <span class="status-badge badge-active">99.4%</span>
+          </div>
+          <div class="gauge-circle-wrap">
+            <svg class="gauge-svg" viewBox="0 0 100 100">
+              <circle class="gauge-bg" cx="50" cy="50" r="42" />
+              <circle class="gauge-arc arc-cyan" cx="50" cy="50" r="42" stroke-dasharray="264" stroke-dashoffset="15" />
+            </svg>
+            <div class="gauge-value-inner">
+              <span class="gauge-number mono" id="kpiSpeedVal">52.4s</span>
+              <span class="gauge-sub">Avg Inbound</span>
+            </div>
+          </div>
+          <p class="gauge-footer mono">Target: &lt;60s &middot; Penalty: 25% Fee Credit</p>
+        </div>
+
+        <!-- KPI 2 -->
+        <div class="gauge-card">
+          <div class="gauge-header">
+            <span class="gauge-title">Deliverability Rate</span>
+            <span class="status-badge badge-active">98.7%</span>
+          </div>
+          <div class="gauge-circle-wrap">
+            <svg class="gauge-svg" viewBox="0 0 100 100">
+              <circle class="gauge-bg" cx="50" cy="50" r="42" />
+              <circle class="gauge-arc arc-emerald" cx="50" cy="50" r="42" stroke-dasharray="264" stroke-dashoffset="20" />
+            </svg>
+            <div class="gauge-value-inner">
+              <span class="gauge-number mono" id="kpiDeliverVal">98.7%</span>
+              <span class="gauge-sub">DMARC 100%</span>
+            </div>
+          </div>
+          <p class="gauge-footer mono">Breaker Trip: &lt;95.0% Deliverability</p>
+        </div>
+
+        <!-- KPI 3 -->
+        <div class="gauge-card">
+          <div class="gauge-header">
+            <span class="gauge-title">BANT Conversion</span>
+            <span class="status-badge badge-active">16.2%</span>
+          </div>
+          <div class="gauge-circle-wrap">
+            <svg class="gauge-svg" viewBox="0 0 100 100">
+              <circle class="gauge-bg" cx="50" cy="50" r="42" />
+              <circle class="gauge-arc arc-emerald" cx="50" cy="50" r="42" stroke-dasharray="264" stroke-dashoffset="65" />
+            </svg>
+            <div class="gauge-value-inner">
+              <span class="gauge-number mono" id="kpiConversionVal">16.2%</span>
+              <span class="gauge-sub">Bayesian Qual</span>
+            </div>
+          </div>
+          <p class="gauge-footer mono">Industry Baseline: 4.2% &middot; Uplift: 3.8x</p>
+        </div>
+
+        <!-- KPI 4 -->
+        <div class="gauge-card">
+          <div class="gauge-header">
+            <span class="gauge-title">Cost per Qualified Mtg</span>
+            <span class="status-badge badge-active">$142.50</span>
+          </div>
+          <div class="gauge-circle-wrap">
+            <svg class="gauge-svg" viewBox="0 0 100 100">
+              <circle class="gauge-bg" cx="50" cy="50" r="42" />
+              <circle class="gauge-arc arc-amber" cx="50" cy="50" r="42" stroke-dasharray="264" stroke-dashoffset="40" />
+            </svg>
+            <div class="gauge-value-inner">
+              <span class="gauge-number mono" id="kpiCostVal">$142.50</span>
+              <span class="gauge-sub">vs $850 SDR</span>
+            </div>
+          </div>
+          <p class="gauge-footer mono">Net Efficiency Margin: 83.2% Reduction</p>
+        </div>
+      </div>
+
+      <!-- Circuit Breaker Section -->
+      <div class="breakers-card">
+        <div class="breakers-header">
+          <div>
+            <h3 class="breakers-title">Dynamic Circuit Breaker &amp; Component Pruning</h3>
+            <p class="breakers-desc">Guarantees zero silent failures. Automatically trips and sheds faulty cylinders if error/escalation rates exceed 15% across consecutive cycles.</p>
+          </div>
+          <div class="status-pill">
+            <span class="pill-dot" style="background:#10b981;"></span>
+            <span>Breaker Status: <strong class="mono text-emerald" id="breakerStatusLabel">ALL CYLINDERS NORMAL</strong></span>
+          </div>
+        </div>
+
+        <div class="breaker-switches-grid">
+          <div class="breaker-item">
+            <div class="breaker-info">
+              <div class="breaker-name">Deliverability Floor Guard</div>
+              <div class="breaker-cond mono">Trip threshold: Deliverability &lt; 95.0%</div>
+            </div>
+            <button class="btn-breaker btn-test-trip" data-comp="C5_COLD_EMAIL">Test Trip</button>
+          </div>
+
+          <div class="breaker-item">
+            <div class="breaker-info">
+              <div class="breaker-name">Hallucination &amp; Schema Guard</div>
+              <div class="breaker-cond mono">Trip threshold: Parsing/Syntax Error &gt; 2.0%</div>
+            </div>
+            <button class="btn-breaker btn-test-trip" data-comp="C1_VOICE_RECEPTIONIST">Test Trip</button>
+          </div>
+
+          <div class="breaker-item">
+            <div class="breaker-info">
+              <div class="breaker-name">CRM Sync Latency Guard</div>
+              <div class="breaker-cond mono">Trip threshold: Webhook Latency &gt; 300s</div>
+            </div>
+            <button class="btn-breaker btn-test-trip" data-comp="C4_CRM_REACTIVATION">Test Trip</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 4: ED25519 VERIFIER & COMPETITOR BENCHMARK -->
+    <section id="view-crypto-benchmark" class="view-panel">
+      <div class="panel-header">
+        <div>
+          <h2 class="panel-title">Ed25519 Verifier &amp; Competitive Moat Matrix</h2>
+          <p class="panel-desc">Cryptographic attestation verification under RFC 8032 and uncompromising head-to-head architectural teardown.</p>
+        </div>
+      </div>
+
+      <div class="crypto-columns">
+        <!-- Cryptographic SLA Verifier Tool -->
+        <div class="crypto-card">
+          <div class="card-title-row">
+            <span class="card-icon">🔐</span>
+            <h3 class="card-title">Ed25519 Monthly SLA Signature Verifier</h3>
+          </div>
+          <p class="card-subtitle">Paste a monthly SLA payload or load the live engine attestation to verify mathematical validity.</p>
+
+          <div class="input-group">
+            <label class="input-label">Public Key (Ed25519 Hex)</label>
+            <input type="text" id="verifyPublicKey" class="form-input mono" placeholder="0x..." />
+          </div>
+
+          <div class="input-group">
+            <label class="input-label">Ed25519 Signature (Hex)</label>
+            <input type="text" id="verifySignature" class="form-input mono" placeholder="0x..." />
+          </div>
+
+          <div class="input-group">
+            <label class="input-label">Report Data JSON</label>
+            <textarea id="verifyReportJson" class="form-input mono" rows="6" placeholder="{ ... }"></textarea>
+          </div>
+
+          <div class="verify-actions">
+            <button class="btn-action" id="btnLoadLiveReport">📥 Load Live Engine SLA</button>
+            <button class="btn-action btn-emerald" id="btnRunVerification">🔒 Verify Signature</button>
+          </div>
+
+          <div class="verify-result-box mono" id="verifyResultBox" style="display:none;">
+            <div class="result-status" id="verifyStatusText">✅ SIGNATURE VALID (RFC 8032)</div>
+            <div class="result-detail">SHA-256 State Root: <span id="resStateRoot"></span></div>
+            <div class="result-detail">EAS Attestation Schema: <span class="text-cyan">0x7996...0d09</span></div>
+            <div class="result-detail">Smart Contract: <span class="text-emerald">0x71C8A18174415cC92067749eb3544DFFD3F87884</span></div>
+            <button class="btn-action btn-copy" id="btnCopyVerifyCert" style="margin-top:0.6rem; width:100%;">📋 Copy Verification Certificate</button>
+          </div>
+        </div>
+
+        <!-- Competitor Matrix -->
+        <div class="benchmark-card">
+          <div class="card-title-row">
+            <span class="card-icon">🏆</span>
+            <h3 class="card-title">Realistic Competitive Teardown</h3>
+          </div>
+          <p class="card-subtitle">Why single-point SDR tools burn customer domains and fail the enterprise SLA test.</p>
+
+          <div class="table-responsive">
+            <table class="competitor-table">
+              <thead>
+                <tr>
+                  <th>Platform</th>
+                  <th>Channels</th>
+                  <th>Speed-to-Lead</th>
+                  <th>Deliverability / L2</th>
+                  <th>Pricing Model</th>
+                  <th>Cryptographic SLA</th>
+                </tr>
+              </thead>
+              <tbody id="competitorTableBody">
+                <!-- Populated dynamically by app.js from /api/competitors -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

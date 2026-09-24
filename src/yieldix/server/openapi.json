@@ -1,0 +1,203 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Yieldix Autonomous B2B Revenue Engine Telemetry API",
+    "version": "1.0.0",
+    "description": "REST API specification for the Yieldix real-time cockpit, L2 cryptographic gating, 6-cylinder pipeline orchestration, and Ed25519 attestation verifier."
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:8088",
+      "description": "Local Sovereign Engine Daemon"
+    }
+  ],
+  "paths": {
+    "/api/health": {
+      "get": {
+        "summary": "Retrieve System Health & Circuit Breaker State",
+        "operationId": "getHealth",
+        "responses": {
+          "200": {
+            "description": "Current system status and active/shed components."
+          }
+        }
+      }
+    },
+    "/api/telemetry": {
+      "get": {
+        "summary": "Retrieve 4-KPI Aggregate Metrics & 6-Cylinder Status",
+        "operationId": "getTelemetry",
+        "responses": {
+          "200": {
+            "description": "Live SLA compliance, deliverability, conversion, EVLP pipeline, and financial metrics."
+          }
+        }
+      }
+    },
+    "/api/l2-queue": {
+      "get": {
+        "summary": "List Pending Cold Email Drafts Awaiting Human Approval",
+        "operationId": "getL2Queue",
+        "responses": {
+          "200": {
+            "description": "Array of pending outreach drafts with SHA-256 digests."
+          }
+        }
+      }
+    },
+    "/api/l2-approve": {
+      "post": {
+        "summary": "Approve and Cryptographically Sign a Cold Email Draft",
+        "operationId": "approveL2Draft",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["task_id"],
+                "properties": {
+                  "task_id": { "type": "string" },
+                  "reviewer": { "type": "string" },
+                  "modified_body": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Approval record with Ed25519 signature."
+          }
+        }
+      }
+    },
+    "/api/l2-reject": {
+      "post": {
+        "summary": "Reject a Pending Cold Email Draft",
+        "operationId": "rejectL2Draft",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["task_id"],
+                "properties": {
+                  "task_id": { "type": "string" },
+                  "reviewer": { "type": "string" },
+                  "reason": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Rejection acknowledgment."
+          }
+        }
+      }
+    },
+    "/api/simulate": {
+      "post": {
+        "summary": "Ingest Batch of Synthetic Leads and Process Pipeline",
+        "operationId": "simulatePipeline",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "leads": { "type": "integer", "default": 5 },
+                  "source": { "type": "string", "default": "WEB_INBOUND" },
+                  "company": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Execution trace of processed leads across cylinders."
+          }
+        }
+      }
+    },
+    "/api/circuit-breaker/toggle": {
+      "post": {
+        "summary": "Simulate Anomaly or Reset Circuit Breaker for a Cylinder",
+        "operationId": "toggleCircuitBreaker",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "component": { "type": "string", "default": "C5_COLD_EMAIL" },
+                  "action": { "type": "string", "enum": ["TRIP", "RESET"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated circuit breaker state."
+          }
+        }
+      }
+    },
+    "/api/verify-report": {
+      "post": {
+        "summary": "Verify Ed25519 Cryptographic Signature for Monthly SLA",
+        "operationId": "verifyReport",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["signature_hex", "report_data"],
+                "properties": {
+                  "signature_hex": { "type": "string" },
+                  "public_key_hex": { "type": "string" },
+                  "report_data": { "type": "object" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Verification result and SHA-256 state root."
+          }
+        }
+      }
+    },
+    "/api/competitors": {
+      "get": {
+        "summary": "Retrieve Comprehensive Competitor Benchmark Matrix",
+        "operationId": "getCompetitors",
+        "responses": {
+          "200": {
+            "description": "Head-to-head comparison against 6 enterprise B2B sales systems."
+          }
+        }
+      }
+    },
+    "/api/sample-report": {
+      "get": {
+        "summary": "Generate Live Ed25519 Signed Monthly SLA Report",
+        "operationId": "getSampleReport",
+        "responses": {
+          "200": {
+            "description": "Canonical signed monthly report payload."
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "yieldix"
+version = "16.0.0"
+description = "Autonomous B2B Revenue Engine, Sub-60s Speed-to-Lead Orchestrator & Verifiable Pipeline Machine"
+readme = "YIELDIX.md"
+authors = [{ name = "Yieldix Contributors" }]
+license = { text = "Apache-2.0" }
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2.0.0",
+    "cryptography>=41.0.0",
+    "pyyaml>=6.0",
+    "click>=8.1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+]
+
+[project.scripts]
+yieldix = "yieldix.cli.main:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q"
+testpaths = ["tests"]
+pythonpath = ["src", "."]
