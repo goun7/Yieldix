@@ -21,8 +21,30 @@ gerçekten-çalıştığını ve kim-ürettiğini kaydeder.
 ```bash
 cd yieldix
 pip install -e .                        # pydantic + cryptography
-python3 -m pytest tests/                # 49-passed
+python3 -m pytest tests/                # 53-passed
 ```
+
+## ⏱️ In 30 seconds ( hızlı-bakış)
+
+```bash
+# 1) Bağımsız-doğrulama — lead→pipeline→KPI→imzalı-rapor zincirini sıfırdan-oynar
+#    ve Ed25519-imzasını yeniden-teyit-eder ( kanıt-entegrasyonu)
+PYTHONPATH=src python3 -m yieldix.cli.main verify            # → SONUÇ: PASS — 5/5
+
+# 2) Makine-okunabilir-çıktı ( CI/entegrasyon-için)
+PYTHONPATH=src python3 -m yieldix.cli.main verify --json     # → {"verdict":"PASS",...}
+
+# 3) İmzalı-performans-raporu ( Ed25519 + SHA-256)
+PYTHONPATH=src python3 -m yieldix.cli.main report --tenant demo-tenant
+
+# 4) Sağlık
+PYTHONPATH=src python3 -m yieldix.cli.main status
+```
+
+> `verify` çıkış-kodu: **0** = tüm-geçitler-sağlam, **1** = en-az-bir-bozuk.
+> Kontroller: `pipeline_runs_lead_to_cycle`, `signed_report_produced`,
+> `signature_verifies_and_tamper_resistant`, `tenant_isolation_enforced`,
+> `circuit_breaker_sheds_on_breach`.
 
 ## Temel-API
 
@@ -49,7 +71,7 @@ report = engine.run_daily_cycle()
 ## Test
 
 ```bash
-python3 -m pytest tests/ -q    # 49-passed
+python3 -m pytest tests/ -q    # 53-passed
 ```
 
 ## Sınırlar ( dürüst)

@@ -125,6 +125,147 @@ def serve(host: str, port: int, no_block: bool = False):
         server.stop()
 
 
+@main.command(name="verify")
+@click.option("--tenant", default="verify-tenant", help="Tenant ID for the verification run")
+@click.option("--json", "as_json", is_flag=True, default=False, help="Machine-readable JSON output")
+def verify(tenant: str, as_json: bool):
+    """
+    Bağımsız-doğrulama CLI'si ( kanıt-entegrasyonu).
+
+    lead → silindirler → KPI → imzalı-rapor zincirini sıfırdan-oynar ve
+    Ed25519-imzasını bağımsız olarak yeniden-doğrular. Demo-komutlarının
+    paylaştığı-durumu kullanmaz; her-geçidi ayrı-ölçer.
+
+    Exit-code: 0 = hepsi-geçti, 1 = en-az-bir-bozuk.
+    """
+    checks: list[dict] = []
+
+    def record(name, ok, detail):
+        checks.append({"check": name, "result": "PASS" if ok else "FAIL", "detail": detail})
+
+    # 1) Pipeline-koşusu: lead-ingest → döngü → KPI-toplandı
+    try:
+        engine = YieldixEngine(PipelineConfig(tenant_id=tenant))
+        lead = InboundLeadPayload(
+            tenant_id=tenant,
+            lead_id="lead_verify_001",
+            contact_name="Verification Contact",
+            contact_phone="+15550001111",
+            source=LeadSource.WEB_FORM,
+            intent_summary="Verification intent — enterprise B2B quote",
+        )
+        ingest_res = asyncio.run(engine.ingest_inbound_lead(lead))
+        cycle = asyncio.run(engine.run_daily_cycle())
+        ok = bool(ingest_res) and len(cycle.get("active_components", [])) > 0
+        record("pipeline_runs_lead_to_cycle", ok,
+               f"ingested={bool(ingest_res)} active={len(cycle.get('active_components', []))} "
+               f"shed={len(cycle.get('shed_components', []))}")
+    except Exception as e:  # pragma: no cover - diagnostic
+        record("pipeline_runs_lead_to_cycle", False, f"exception: {type(e).__name__}: {e}")
+
+    # 2) Kanıt-üretimi: imzalı-rapor-üretiliyor + SHA-256-özeti-var
+    try:
+        engine = YieldixEngine(PipelineConfig(tenant_id=tenant))
+        engine.kpi_collector.record_lead_processed(
+            "lead_verify_001", 32.5, is_sql=True, cost_try=Decimal("15.00"))
+        gen = MonthlyReportGenerator()
+        rep = gen.generate_signed_report(
+            tenant_id=tenant, period_start="2026-10-01", period_end="2026-10-31",
+            kpi_collector=engine.kpi_collector,
+            active_components=engine.config.enabled_components,
+        )
+        digest = getattr(rep, "sha256_digest", None)
+        sig = getattr(rep, "ed25519_signature", None)
+        pubkey = gen.signer.public_key_hex if gen.signer else None
+        ok = bool(digest) and bool(sig) and bool(pubkey)
+        record("signed_report_produced", ok,
+               f"digest={(digest or 'YOK')[:24]}… sig={'var' if sig else 'YOK'} key={'var' if pubkey else 'YOK'}")
+    except Exception as e:  # pragma: no cover - diagnostic
+        record("signed_report_produced", False, f"exception: {type(e).__name__}: {e}")
+
+    # 3) Bağımsız-imza-doğrulaması: imza, payload-üzerinden yeniden-teyit
+    try:
+        engine = YieldixEngine(PipelineConfig(tenant_id=tenant))
+        engine.kpi_collector.record_lead_processed(
+            "lead_verify_001", 32.5, is_sql=True, cost_try=Decimal("15.00"))
+        gen = MonthlyReportGenerator()
+        rep = gen.generate_signed_report(
+            tenant_id=tenant, period_start="2026-10-01", period_end="2026-10-31",
+            kpi_collector=engine.kpi_collector,
+            active_components=engine.config.enabled_components,
+        )
+        from yieldix.crypto.signer import Ed25519ReportSigner
+        payload = MonthlyReportGenerator.to_signable_dict(rep)
+        sig = getattr(rep, "ed25519_signature", None)
+        pubkey = gen.signer.public_key_hex if gen.signer else None
+        verified = Ed25519ReportSigner.verify_signature(payload, sig, pubkey)
+        # Tahrif-direnci: imzalı-payload-değiştirilince imza artık-onaylanmamalı
+        tampered = dict(payload)
+        if "total_leads" in tampered:
+            tampered["total_leads"] = (tampered["total_leads"] or 0) + 999
+        tampered_ok = not Ed25519ReportSigner.verify_signature(tampered, sig, pubkey)
+        ok = bool(verified) and tampered_ok
+        record("signature_verifies_and_tamper_resistant", ok,
+               f"verify={bool(verified)} tamper-rejected={tampered_ok}")
+    except Exception as e:  # pragma: no cover - diagnostic
+        record("signature_verifies_and_tamper_resistant", False,
+               f"exception: {type(e).__name__}: {e}")
+
+    # 4) Tenant-izolasyonu: AT-179 — configsiz-motor-default-tenant-reddeder
+    try:
+        import os
+        old = os.environ.pop("YIELDIX_TENANT_ID", None)
+        os.environ.pop("YIELDIX_ALLOW_DEFAULT_TENANT", None)
+        try:
+            YieldixEngine()
+            ok = False
+            detail = "configsiz-engine-KABUL-EDİLDİ ( cross-tenant-açık!)"
+        except ValueError:
+            ok = True
+            detail = "configsiz-engine-reddedildi ( tenant-zorunlu-sağlam)"
+        finally:
+            if old is not None:
+                os.environ["YIELDIX_TENANT_ID"] = old
+        record("tenant_isolation_enforced", ok, detail)
+    except Exception as e:  # pragma: no cover - diagnostic
+        record("tenant_isolation_enforced", False, f"exception: {type(e).__name__}: {e}")
+
+    # 5) Circuit-breaker: aşırı-ihlal → component-shed-edilir
+    try:
+        from yieldix.core.circuit_breaker import CircuitBreaker
+        cb = CircuitBreaker(max_escalation_pct=10.0, max_consecutive_breaches=3)
+        for _ in range(4):
+            cb.record_interaction("c_verify", has_error=False, was_escalated=True)
+            cb.evaluate_cycle("c_verify")
+        shed = cb.get_shed_components()
+        ok = "c_verify" in shed
+        record("circuit_breaker_sheds_on_breach", ok,
+               f"shed={shed}")
+    except Exception as e:  # pragma: no cover - diagnostic
+        record("circuit_breaker_sheds_on_breach", False,
+               f"exception: {type(e).__name__}: {e}")
+
+    n_pass = sum(1 for c in checks if c["result"] == "PASS")
+    n_all = len(checks)
+    verdict = "PASS" if n_pass == n_all else "FAIL"
+
+    if as_json:
+        click.echo(json.dumps({"verdict": verdict, "passed": n_pass, "total": n_all,
+                               "checks": checks}, ensure_ascii=False, indent=2))
+    else:
+        click.echo("=" * 70)
+        click.echo("  YIELDIX BAĞIMSIZ-DOĞRULAMA ( independent-verify)")
+        click.echo("=" * 70)
+        for c in checks:
+            mark = "✓" if c["result"] == "PASS" else "✗"
+            click.echo(f"  [{mark}] {c['result']:<4} {c['check']}")
+            click.echo(f"         {c['detail']}")
+        click.echo("-" * 70)
+        click.echo(f"  SONUÇ: {verdict} — {n_pass}/{n_all} kontrol-geçti")
+        click.echo("=" * 70)
+    ctx = click.get_current_context()
+    ctx.exit(0 if verdict == "PASS" else 1)
+
 
 if __name__ == "__main__":
     main()
