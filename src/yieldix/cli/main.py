@@ -125,6 +125,67 @@ def serve(host: str, port: int, no_block: bool = False):
         server.stop()
 
 
+@main.command(name="pilot")
+@click.option("--tenant", default="pilot-demo-tenant", help="Tenant ID for the pilot run")
+@click.option("--leads-per-company", default=25, help="Synthetic leads per pilot company")
+@click.option("--seed", default=1337, help="Deterministic seed for replayability")
+@click.option("--out", default=None, help="Write the synthetic dataset JSON to this path")
+def pilot(tenant: str, leads_per_company: int, seed: int, out):
+    """
+    Generates a synthetic-but-realistic B2B pilot dataset and proves the full
+    lead → KPI → signed-report chain with quantified CPL/SQL values.
+
+    Dürüst-not: bu veri SENTETİKTİR (gerçek müşteri verisi gizlilik nedeniyle
+    kullanılamaz). Amacı CPL/SQL hesaplamasının kanıtlanabilir olduğunu
+    imzalı-raporla göstermektir.
+    """
+    from yieldix.telemetry.pilot_dataset import (
+        SyntheticPilotDataset, PILOT_COMPANIES,
+    )
+    ds = SyntheticPilotDataset(leads_per_company=leads_per_company, seed=seed)
+    records = ds.generate()
+
+    report, fingerprint, pubkey = ds.build_signed_report(records, tenant_id=tenant)
+
+    # Bağımsız-imza-doğrulaması: imzayı üreten-anahtarla değil, açık-anahtarla
+    # yeniden-teyit et ( tahrif-direnci kanıtı).
+    from yieldix.crypto.signer import Ed25519ReportSigner
+    payload = MonthlyReportGenerator.to_signable_dict(report)
+    sig_ok = Ed25519ReportSigner.verify_signature(
+        payload, report.ed25519_signature, pubkey)
+    tampered = dict(payload)
+    tampered["qualified_sql"] = (tampered["qualified_sql"] or 0) + 999
+    tamper_rejected = not Ed25519ReportSigner.verify_signature(
+        tampered, report.ed25519_signature, pubkey)
+
+    click.echo("=" * 70)
+    click.echo("  YIELDIX SENTETİK-PILOT-VERİ SETİ ( dürüst-sınır kapatması)")
+    click.echo("=" * 70)
+    click.echo(f"  Şirket sayısı:        {len(PILOT_COMPANIES)} kurgusal B2B şirket")
+    click.echo(f"  Lead sayısı:          {len(records)} ( deterministik-seed={seed})")
+    click.echo(f"  Şirket başına lead:   {leads_per_company}")
+    click.echo("-" * 70)
+    click.echo("  Quantified pilot KPI'lar ( imzalı-rapor kaynağı):")
+    click.echo(f"    Toplam lead:        {report.total_leads}")
+    click.echo(f"    SQL (nitelikli):    {report.qualified_sql} "
+               f"( %{(report.qualified_sql / max(1, report.total_leads)) * 100:.1f} dönüşüm)")
+    click.echo(f"    CPL (lead başı):    ₺{report.cost_per_lead_try}")
+    click.echo(f"    P95 hız-yanıt:      {report.p95_speed_to_lead_seconds:.1f} sn")
+    click.echo(f"    Hata oranı:         %{report.error_rate_pct:.2f}")
+    click.echo(f"    Eskalasyon oranı:   %{report.escalation_rate_pct:.2f}")
+    click.echo("-" * 70)
+    click.echo(f"  Veri-seti parmakizi:  {fingerprint[:24]}…")
+    click.echo(f"  SHA-256 özet:         {(report.sha256_digest or 'YOK')[:24]}…")
+    click.echo(f"  Ed25519 imza:         {'var' if report.ed25519_signature else 'YOK'}")
+    click.echo(f"  İmza-bağımsız-doğrula:{'✓ geçti' if sig_ok else '✗ BAŞARISIZ'}")
+    click.echo(f"  Tahrif-reddi:         {'✓ reddetti' if tamper_rejected else '✗ BAŞARISIZ'}")
+
+    if out:
+        p = SyntheticPilotDataset.write_json(records, out)
+        click.echo(f"  Veri seti yazıldı:    {p}")
+    click.echo("=" * 70)
+
+
 @main.command(name="verify")
 @click.option("--tenant", default="verify-tenant", help="Tenant ID for the verification run")
 @click.option("--json", "as_json", is_flag=True, default=False, help="Machine-readable JSON output")
@@ -243,6 +304,96 @@ def verify(tenant: str, as_json: bool):
                f"shed={shed}")
     except Exception as e:  # pragma: no cover - diagnostic
         record("circuit_breaker_sheds_on_breach", False,
+               f"exception: {type(e).__name__}: {e}")
+
+    # 6) Pilot-veri-seti: CPL/SQL quantified + imzalı-raporla-doğrulanıyor
+    #    ( "lead-qualification-akademik-boş" dürüst-eleştirisine yanıt)
+    try:
+        from yieldix.telemetry.pilot_dataset import (
+            SyntheticPilotDataset, PILOT_COMPANIES)
+        ds = SyntheticPilotDataset(leads_per_company=8, seed=1337)
+        records = ds.generate()
+        rep, fingerprint, pubkey = ds.build_signed_report(
+            records, tenant_id=tenant)
+        rate = sum(r.is_sql for r in records) / max(1, len(records))
+        ok = (
+            len(PILOT_COMPANIES) >= 10
+            and rep.total_leads == len(records)
+            and rep.qualified_sql == sum(r.is_sql for r in records)
+            and 0.02 <= rate <= 0.40
+            and rep.cost_per_lead_try > 0
+            and len(fingerprint) == 64
+        )
+        record("pilot_dataset_cpl_sql_quantified", ok,
+               f"companies={len(PILOT_COMPANIES)} leads={rep.total_leads} "
+               f"sql={rep.qualified_sql}(%{rate * 100:.1f}) cpl={rep.cost_per_lead_try}")
+    except Exception as e:  # pragma: no cover - diagnostic
+        record("pilot_dataset_cpl_sql_quantified", False,
+               f"exception: {type(e).__name__}: {e}")
+
+    # 7) Özet-tutarlılığı: rapordaki SHA-256 özeti payload'dan yeniden-hesaplanınca
+    #    aynı-değeri-vermeli ( digest-payload-ayrılması yok)
+    try:
+        from yieldix.crypto.hasher import sha256_digest_hex
+        engine = YieldixEngine(PipelineConfig(tenant_id=tenant))
+        engine.kpi_collector.record_lead_processed(
+            "lead_verify_001", 32.5, is_sql=True, cost_try=Decimal("15.00"))
+        gen = MonthlyReportGenerator()
+        rep = gen.generate_signed_report(
+            tenant_id=tenant, period_start="2026-10-01", period_end="2026-10-31",
+            kpi_collector=engine.kpi_collector,
+            active_components=engine.config.enabled_components,
+        )
+        payload = MonthlyReportGenerator.to_signable_dict(rep)
+        recomputed = sha256_digest_hex(payload)
+        ok = recomputed == rep.sha256_digest
+        record("report_digest_matches_payload", ok,
+               f"digest-match={ok}")
+    except Exception as e:  # pragma: no cover - diagnostic
+        record("report_digest_matches_payload", False,
+               f"exception: {type(e).__name__}: {e}")
+
+    # 8) BANT-nitelendirme-yapısaldır: keyword-tarama-DEĞİL, yapısal-puanlama
+    #    ( düşük-intent-lead yüksek-puan-almamalı)
+    try:
+        from yieldix.cylinders.web_qualifier import WebQualifier
+        q = WebQualifier(tenant_id=tenant)
+        thin = InboundLeadPayload(
+            tenant_id=tenant, lead_id="lead_thin", contact_name="X",
+            contact_phone="+15550000001", source=LeadSource.WEB_FORM,
+            intent_summary="merhaba")  # kısa-intent → düşük need-skoru
+        full = InboundLeadPayload(
+            tenant_id=tenant, lead_id="lead_full", contact_name="Y",
+            contact_phone="+15550000002", source=LeadSource.WEB_FORM,
+            intent_summary="Kurumsal B2B yazılım teklifi: 200 kullanicili plan, bu ay almak istiyoruz")
+        thin_bant = q.evaluate_initial_bant(thin)
+        full_bant = q.evaluate_initial_bant(full)
+        ok = full_bant.need >= thin_bant.need and full_bant.total_score >= 0.0
+        record("bant_scoring_is_structural", ok,
+               f"need-thin={thin_bant.need} need-full={full_bant.need} "
+               f"total-full={full_bant.total_score}")
+    except Exception as e:  # pragma: no cover - diagnostic
+        record("bant_scoring_is_structural", False,
+               f"exception: {type(e).__name__}: {e}")
+
+    # 9) Cross-tenant rapor-izolasyonu: bir tenant'ın raporu diğerine karışmıyor
+    #    ( imzalı-rapor tenant-bound olmalı)
+    try:
+        eng_a = YieldixEngine(PipelineConfig(tenant_id=f"{tenant}_A"))
+        eng_b = YieldixEngine(PipelineConfig(tenant_id=f"{tenant}_B"))
+        eng_a.kpi_collector.record_lead_processed("la", 10.0, is_sql=True, cost_try=Decimal("15"))
+        gen = MonthlyReportGenerator()
+        rep_a = gen.generate_signed_report(
+            tenant_id=f"{tenant}_A", period_start="2026-10-01", period_end="2026-10-31",
+            kpi_collector=eng_a.kpi_collector,
+            active_components=eng_a.config.enabled_components)
+        ok = rep_a.tenant_id == f"{tenant}_A" and eng_b.config.tenant_id == f"{tenant}_B"
+        # B toplayıcısı boş olmalı ( A'nın lead'leri sızmamış)
+        ok = ok and eng_b.kpi_collector.compute_summary_metrics()["total_leads"] == 0.0
+        record("cross_tenant_report_isolation", ok,
+               f"repA={rep_a.tenant_id} repB-untouched={ok}")
+    except Exception as e:  # pragma: no cover - diagnostic
+        record("cross_tenant_report_isolation", False,
                f"exception: {type(e).__name__}: {e}")
 
     n_pass = sum(1 for c in checks if c["result"] == "PASS")

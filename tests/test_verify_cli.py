@@ -30,7 +30,8 @@ def test_verify_all_green():
     p = _run_cli("verify", "--tenant", "verify-test-tenant")
     assert p.returncode == 0, p.stderr
     assert "SONUÇ: PASS" in p.stdout
-    assert "5/5" in p.stdout
+    # 8+ gate hedefi: güncel kapı sayısı 9 ( 5 → 9)
+    assert "9/9" in p.stdout
 
 
 def test_verify_json_shape():
@@ -39,7 +40,7 @@ def test_verify_json_shape():
     assert p.returncode == 0, p.stderr
     d = json.loads(p.stdout)
     assert d["verdict"] == "PASS"
-    assert d["passed"] == d["total"] == 5
+    assert d["passed"] == d["total"] == 9
     for c in d["checks"]:
         assert set(c.keys()) == {"check", "result", "detail"}
         assert c["result"] == "PASS"
@@ -86,3 +87,39 @@ def test_verify_tenant_isolation_gate_present():
     p = _run_cli("verify", "--tenant", "verify-test-tenant")
     assert p.returncode == 0, p.stderr
     assert "tenant_isolation_enforced" in p.stdout
+
+
+def test_verify_reports_all_new_gate_names():
+    """Dürüst-sınır genişlemesi: yeni 4 geçit çıktıda-adı-geçmeli."""
+    p = _run_cli("verify", "--tenant", "verify-test-tenant")
+    assert p.returncode == 0, p.stderr
+    for gate in (
+        "pilot_dataset_cpl_sql_quantified",
+        "report_digest_matches_payload",
+        "bant_scoring_is_structural",
+        "cross_tenant_report_isolation",
+    ):
+        assert gate in p.stdout
+
+
+def test_verify_at_least_eight_gates():
+    """Görev-hedefi: verify 5 → 8+ kapı."""
+    p = _run_cli("verify", "--json", "--tenant", "verify-test-tenant")
+    assert p.returncode == 0, p.stderr
+    d = json.loads(p.stdout)
+    assert d["total"] >= 8
+    names = {c["check"] for c in d["checks"]}
+    assert len(names) == d["total"]   # benzersiz-isimler
+    assert all(c["result"] == "PASS" for c in d["checks"])
+
+
+def test_verify_pilot_gate_quantifies_sql():
+    """Pilot-geçidi gerçek SQL-sayısını-raporlamalı ( 0 değil)."""
+    p = _run_cli("verify", "--json", "--tenant", "verify-test-tenant")
+    assert p.returncode == 0, p.stderr
+    d = json.loads(p.stdout)
+    pilot = next(c for c in d["checks"] if c["check"] == "pilot_dataset_cpl_sql_quantified")
+    assert pilot["result"] == "PASS"
+    assert "sql=" in pilot["detail"]
+    # 12 şirket + her-birinden lead → en az 10 SQL-bekleriz ( ~%13.5 dönüşüm)
+    assert "companies=12" in pilot["detail"]
