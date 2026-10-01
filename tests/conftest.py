@@ -2,6 +2,16 @@
 Pytest configuration and shared fixtures for Yieldix test suite.
 """
 
+import os
+import sys
+
+# LEAD fix: src/ layout — paket sys.path'te degildi (ModuleNotFoundError)
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_SRC = os.path.join(_HERE, "..", "src")
+for _p in (os.path.abspath(_SRC),):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
+
 import pytest
 
 from yieldix.core.engine import YieldixEngine

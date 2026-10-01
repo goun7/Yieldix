@@ -3,13 +3,15 @@ Comprehensive tests for the Yieldix Web Cockpit & Telemetry Server.
 Runs against real listening HTTP socket on localhost without mocks.
 """
 
+import pytest
+
+pytestmark = pytest.mark.live  # LEAD: gercek socket — yavastir, CI'da atlanabilir
+
 import json
 import threading
 import time
 import urllib.error
 import urllib.request
-
-import pytest
 
 from yieldix.server.app import create_server
 
