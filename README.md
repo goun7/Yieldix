@@ -101,3 +101,77 @@ python3 -m pytest tests/ -q    # 53-passed
   katmanı** [63-Sester](../63-Sester), **kalıcı kanıt-anchor**
   [TamgaProtocol](../../05_acik_kaynak/TamgaProtocol). Her katman
   tek bir işi yapar.
+
+## Akademik Kaynaklar (2024-2026)
+
+Bu çalışma aşağıdaki araştırmaya dayanır (her referans canlı
+doğrulanmıştır: `curl -sIL https://arxiv.org/abs/...` → **200**):
+
+- **[1] Katkı-kanıtı mekanizması** —
+  *A proof of contribution in blockchain using game theoretical deep
+  learning model* — Wang, arXiv 2024 (cs.CR).
+  Blockchain üzerinde oyun-teorik **katkı-kanıtı** ( proof-of-
+  contribution) mekanizması: katılımcıları kaynaklarını sunmaya
+  motive eden teşvik-modeli. Yieldix'in "üretim-kanıtı üretir"
+  tasarımının doğrudan benzeri — kepenk yerine **katılımı**
+  ispatlar.
+  [arXiv:2409.07460](https://arxiv.org/abs/2409.07460)
+- **[2] Katkı-kanunu + itibar** —
+  *PoCQ: Proof of Contribution Quality as a Lightweight Blockchain
+  Consensus for Secure Federated Learning* — Abed et al., arXiv 2026
+  (cs.DC).
+  **İtibar-farkında** doğrulama + kriptografik-commitment ile katkı
+  kalitesinin kanıtlanması; zincire yalnızca sıkı-denetim-metaverisi
+  yazılır. Yieldix'in her-adım-kanıt-hash'i + BANT-nitelendirme
+  ikilisinin ( hafif-doğrulama + itibar) akademik karşılığı.
+  [arXiv:2606.05642](https://arxiv.org/abs/2606.05642)
+- **[3] Katkı-ölçümü + teşvik** —
+  *Democratizing Federated Learning with Blockchain and Multi-Task
+  Peer Prediction* — Witt et al., arXiv 2026 (cs.CR, cs.CY).
+  Katkı-ölçümünün hesaplama-ağırlığının zincir kısıtlarıyla çatışması
+  sorununa **peer-prediction** ile çözüm; akıllı-sözleşmelerle
+  katılım-teşviki. Yieldix'in "kanıt-hesaplaması-pipeline-içinde-
+  kalır" benzeri bir maliyet-farkındalığı.
+  [arXiv:2603.28434](https://arxiv.org/abs/2603.28434)
+- **[4] Yararlı-iş kanıtı + teşvik-güvenliği** —
+  *Proof-of-Learning with Incentive Security* — Zhao et al., arXiv
+  2024 (cs.CR, cs.AI, cs.ET).
+  PoW/PoS'un yerine **anlamlı-iş** ( proof-of-useful-work) kanıtlayan
+  protokol ailesi ve teşvik-uyumlu-güvenlik analizi. Yieldix'in
+  "kanıt-üretir, fon yönetmez" tercihinin teorik temeli: ispatın
+  kendisi üretilen-değerdir.
+  [arXiv:2404.09005](https://arxiv.org/abs/2404.09005)
+- **[5] Çok-ajanlı adil-atfedim** —
+  *Semantic Cooperative Games for Contribution Attribution in
+  LLM-Based Multi-Agent Systems* — Jiang et al., arXiv 2026 (cs.AI).
+  Çok-ajanlı iş-akışlarında **karşı-faktörel** ( counterfactual)
+  yöntemlerin yüksek-varyans/maliyet sorununa semantik-oyun-teorisi
+  çözümü: her ajanın bilgiye katkısını ayrıştırır. Yieldix'in
+  pipeline-silindirleri boyunca "kim-üretti" sorusunun akademik
+  çerçevesi.
+  [arXiv:2607.18255](https://arxiv.org/abs/2607.18255)
+- **[6] Shapley-tabanli kredi-ataması** —
+  *Who Deserves the Reward? SHARP: Shapley Credit-based Optimization
+  for Multi-Agent System* — Li et al., arXiv 2026 (cs.AI).
+  Seyrek/genel-yayın ödüllerinin yerine **Shapley-değerine-dayalı
+  hiyerarşik-atfedim**: hangi işlevsel-ajanın başarıdan/başarısızlıktan
+  sorumlu olduğunu belirler. BANT-nitelendirmenin "yapısal-lead-
+  doğrulama" yaklaşımı için dağıtık-adillik referansı.
+  [arXiv:2602.08335](https://arxiv.org/abs/2602.08335)
+- **[7] Ajans-sistemi kredi-ataması** —
+  *CANTANTE: Optimizing Agentic Systems via Contrastive Credit
+  Attribution* — Zehle, arXiv 2026 (cs.CL, cs.AI, cs.MA).
+  Sistem-düzeyi puanlarını **kontrastif** karşılaştırmayla her-ajan
+  için yerel güncelleme-sinyallerine ayrıştırır. Yieldix'in
+  tenant-bazlı-rapor-pipeline'ında sistem-düzeyi-çıktıyı
+  adil-biçimde-parçalama ihtiyacıyla örtüşür.
+  [arXiv:2605.13295](https://arxiv.org/abs/2605.13295)
+- **[8] Katilimci-uretim protokolu** —
+  *DAO-Agent: Zero Knowledge-Verified Incentives for Decentralized
+  Multi-Agent Coordination* — Xia et al., arXiv 2025 (cs.MA).
+  Güvensiz-ortamlarda merkezileştirilmiş-koordinasyonun açık-vurgusu:
+  "şeffaf katkı-ölçümü ve adil-teşvik-dağıtımı sağlanamaz"; çözüm
+  sıfır-bilgi-kanıtlı denetlenebilir-görev-yürütme. Yieldix'in
+  **katılım-üretim protokolü** olarak varoluş-gerekçesinin ( neden
+  imzalı-kanıt gerekli) en yakın akademik ifadesi.
+  [arXiv:2512.20973](https://arxiv.org/abs/2512.20973)
