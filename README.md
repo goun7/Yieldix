@@ -81,3 +81,23 @@ python3 -m pytest tests/ -q    # 53-passed
   ( AT-183-incelemesi: 11-kalan-modül-İNDETERMİNE-test-double'sız)
 - Pipeline **sync**-çalışır; async-zamanlama-kontrolleri-yok ( AT-181-
   kapsamında-temiz)
+
+## Akademik & teknik temel
+
+- **Append-only evidence chain** — her pipeline adımı bir kanıt-hash'i
+  taşır: inbound-lead → BANT-nitelendir → pipeline-sırası →
+  MonthlyReportPayload → Ed25519-imza. Bu, **append-only ledger**
+  desenidir: geçmiş değiştirilemez, sadece yeni kayıt eklenebilir.
+- **Ed25519 imza** — rapor imzası için (RFC 8032): hızlı, deterministik,
+  küçük imza. Ajan-pazarlama raporlarında **değiştirilemez kanıt**
+  için seçildi.
+- **EU AI Act §6 (şeffaflık + kanıt)** — Yieldix'in imzalı raporu,
+  AI tarafından üretilen pazarlama kararlarının **denetlenebilir**
+  olmasını sağlar. Benzer tartışma:
+  [x402 #2332](https://github.com/x402-foundation/x402/issues/2332)
+  (post-settlement accountability — "loglar yeniden yazılabilir;
+  hash-chain anchor olamaz").
+- **Mesh içindeki rolü** — Yieldix kanıt üretir; **ödeme-makbuz
+  katmanı** [63-Sester](../63-Sester), **kalıcı kanıt-anchor**
+  [TamgaProtocol](../../05_acik_kaynak/TamgaProtocol). Her katman
+  tek bir işi yapar.
