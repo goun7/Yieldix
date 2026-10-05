@@ -374,8 +374,19 @@ def test_server_keyboard_interrupt():
     srv = create_server(host="127.0.0.1", port=8993)
 
     def trigger_interrupt():
-        time.sleep(0.08)
-        _thread.interrupt_main()
+        # Fix-2026-10-05: kör 0.08s zamanlayıcı yarışlıydı — kesme socket-bind
+        # sırasında ( serve_forever try-bloğu DIŞINDA) gelirse KeyboardInterrupt
+        # yakalanmıyor, pytest'e kaçıp tüm suite'i öldürüyordu ( rc=2) ve
+        # arkada 8993-portlu yetim süreç bırakıyordu. Düzeltme: main-thread
+        # serve_forever()'a girene ( _is_serving=True) kadar bekle, ANCAK o
+        # zaman kes; sunucu hiç serve edemediyse ( örn. port meşgul) asla
+        # kesme — srv.start() kendi hatasıyla temiz başarısız olur. Aynı
+        # davranışı test eder ( Ctrl-C'de düzgün kapanma), sadece yarışsız.
+        for _ in range(400):
+            if srv._is_serving:
+                _thread.interrupt_main()
+                return
+            time.sleep(0.01)
 
     t = threading.Thread(target=trigger_interrupt, daemon=True)
     t.start()

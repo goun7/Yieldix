@@ -21,7 +21,7 @@ gerçekten-çalıştığını ve kim-ürettiğini kaydeder.
 ```bash
 cd yieldix
 pip install -e .                        # pydantic + cryptography
-python3 -m pytest tests/                # 53-passed
+python3 -m pytest tests/                # 110-passed (+11 Tamga-anchor)
 ```
 
 ## ⏱️ In 30 seconds ( hızlı-bakış)
@@ -68,10 +68,67 @@ report = engine.run_daily_cycle()
 | Kanıt-hash'leri | her-silindir-çıktısı-hash'lenir → Merkle-bağı |
 | BANT-nitelendir | yapısal-lead-doğrulama ( anahtar-kelime-tespiti-DEĞİL) |
 
+## Tamga ledger sabitleme ( mesh-anchor)
+
+Yieldix'in imzalı kanıtı artık **Tamga'nın bağımsız hash-zincirine**
+sabitleniyor — [TamgaProtocol](../../05_acik_kaynak/TamgaProtocol)
+( mesh'in kalıcı kanıt-anchor katmanı). Kanıt tek-parti tarafından
+gizlice değiştirilemesin diye: aynı kanıt iki bağımsız zincirde paralel
+yaşar ( Yieldix'in Ed25519 imza-zincirinde + Tamga'nın append-only
+hash-zincirinde).
+
+```
+MonthlyReportPayload → Ed25519-imza ( AT-077)
+         ↓
+    tamga_anchor.build_anchor_record
+         ↓  h = sha256(prev ‖ jcs(kayıt − {h}))   ← RFC 8785 JCS, bayt-uyumlu
+    tamga-sim/1 ledger.jsonl   →  Tamga'nın KENDİ verifier'ında GREEN
+```
+
+**Modül:** `yieldix.mesh.tamga_anchor` — bağımlılıksız ( stdlib-only);
+Tamga'nın JCS'i RFC 8785'den sıfırdan yazılmıştır ve `tamga_canon.jcs` ile
+**bayt-bayt uyumludur** ( parite-testi makine-çeklidir).
+
+```bash
+# Üretilen ledger'ı Tamga'nın KENDİ bağımsız verifier'ında doğrula
+PYTHONPATH=src python3 -c "
+from yieldix.crypto.signer import Ed25519ReportSigner
+from yieldix.mesh.tamga_anchor import sabitle_raporlar
+# ... imzalı raporları üret ...
+s = sabitle_raporlar(raporlar, signer=signer)
+s.tamga.jsonl_yaz('/tmp/yieldix_anchor.jsonl')
+"
+python3 /path/to/TamgaProtocol/tests/conformance/verify.py /tmp/yieldix_anchor.jsonl
+# → {"ok": true, "reason": "ok", ...}   ( GREEN)
+```
+
+```python
+from yieldix.mesh.tamga_anchor import KanitTamgaSabitleyici, anchor_report
+
+# Tek kanıtı mevcut bir ledger'a sabitle ( kırık zincire asla eklemez)
+kayit = anchor_report(rapor, "tamga-ledger.jsonl",
+                      public_key_hex=signer.public_key_hex)
+
+# Veya toplu + üç-katmanlı doğrulama
+sabitleyici = KanitTamgaSabitleyici(raporlar, signer=signer)
+sabitleyici.sabitle()          # idempotent: yalnızca yeni kanıtları işler
+assert sabitleyici.dogrula()   # 1) Tamga zincir-bütünlüğü ( D5 kuralı)
+                               # 2) Ed25519 imzası kanıt-üzerinde geçerli
+                               # 3) tamlık: her kanıt sabitlenmiş
+```
+
+**Neden RFC 8785 ( JCS) değil ``json.dumps(sort_keys=True)``?** Bir kanıtın
+noktası, yabancının **farklı bir dille** aynı baytları yeniden türetebilmesidir.
+RFC 8785: üye-adları UTF-16 kod-birim dizisine göre sıralar ( §3.2.3) ve
+sayıları ECMAScript ``Number.prototype.toString`` ile yazar ( §3.2.2.2:
+``1.0`` → ``"1"``, ``2.93e-07`` → ``"2.93e-7"``). Yieldix'in mevcut imza
+yüzeyi ( AT-077) olduğu gibi kalır; yalnızca Tamga zincir-hash'i JCS
+kullanır — iki ayrı canonicalization, iki ayrı amaç için.
+
 ## Test
 
 ```bash
-python3 -m pytest tests/ -q    # 53-passed
+python3 -m pytest tests/ -q    # 121-passed
 ```
 
 ## Sınırlar ( dürüst)
