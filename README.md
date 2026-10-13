@@ -21,7 +21,7 @@ gerçekten-çalıştığını ve kim-ürettiğini kaydeder.
 ```bash
 cd yieldix
 pip install -e .                        # pydantic + cryptography
-python3 -m pytest tests/                # 110-passed (+11 Tamga-anchor)
+python3 -m pytest tests/                # 267-passed rc=0 (2026-10-13 LEED-ölçümü)
 ```
 
 ## ⏱️ In 30 seconds ( hızlı-bakış)
