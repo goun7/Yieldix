@@ -8,6 +8,7 @@ from __future__ import annotations
 import logging
 import time
 from typing import Any
+from uuid import uuid4
 
 from yieldix.core.types import TaskStatus
 
@@ -93,7 +94,10 @@ class ColdEmailL2Manager:
         company_domain: str = "outbound.yieldix.internal",
     ) -> str:
         """Submits a draft to the mandatory L2 Human Approval queue"""
-        task_id = f"l2_{int(time.time() * 1000)}_{lead_id}"
+        # uuid suffix: ayni lead_id ile ayni milisaniyede (veya saat-geri-alma
+        # ile) iki enqueue ayni task_id uretip birincinin uzerine-yazmasin —
+        # sessiz draft-kaybi (dal-kesen BULGU, LEED-teyitli)
+        task_id = f"l2_{int(time.time() * 1000)}_{lead_id}_{uuid4().hex[:8]}"
         
         deliverability = self.verify_domain_deliverability(company_domain)
         if not deliverability["deliverability_healthy"]:

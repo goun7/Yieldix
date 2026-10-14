@@ -305,10 +305,13 @@ class TestEnqueueOutboundDraft:
     """enqueue_outbound_draft — L2 insan-onay kuyrugu."""
 
     def test_saglikli_domain_task_id_donar(self, saglikli_dns):
-        """D17: saglikli domain -> 'l2_<ms>_<lead_id>' formatinda task_id."""
+        """D17: saglikli domain -> 'l2_<ms>_<lead_id>_<uuid8>' formatinda
+        task_id (uuid-suffix SW-YIELDIX-1 fix'i: milisaniye-carpismasi-onler)."""
         task_id = _enqueue(_manager(), lead_id="lead-42")
         assert task_id.startswith("l2_")
-        assert task_id.endswith("_lead-42")
+        parca = task_id.split("_")
+        assert parca[2] == "lead-42"
+        assert len(parca[-1]) == 8  # uuid4().hex[:8]
 
     def test_kirli_domain_value_error(self, fake_dns):
         """D18: sagliksiz domain -> ValueError (queue'ya hicbir sey eklenmez)."""
