@@ -174,8 +174,8 @@ class TestVerifyDallari:
         runner = CliRunner()
         result = runner.invoke(main, ["verify"])
         assert result.exit_code == 0, result.output
-        # komut calistiktan sonra env-degeri KAYBOLMUS ( mutasyon-kaniti)
-        assert os.environ.get("YIELDIX_ALLOW_DEFAULT_TENANT") is None
+        # YIELDIX-1 (DUZELTILDI): env-degeri-artik-KORUNUYOR
+        assert os.environ.get("YIELDIX_ALLOW_DEFAULT_TENANT") == "1"
 
 
 # ---------------------------------------------------------------------------

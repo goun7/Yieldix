@@ -276,7 +276,10 @@ def verify(tenant: str, as_json: bool):
     try:
         import os
         old = os.environ.pop("YIELDIX_TENANT_ID", None)
-        os.environ.pop("YIELDIX_ALLOW_DEFAULT_TENANT", None)
+        # YIELDIX-1 (DUZELTILDI): 'YIELDIX_ALLOW_DEFAULT_TENANT'-de-pop'lanip-
+        # GERI-KONMUYORDU ( env-mutasyonu-yan-etkisi — kontrol-kendi-env'ini-
+        # kalici-olarik-kirletiyordu). Artik-her-iki-deger-de-geri-yuklenir.
+        old_allow = os.environ.pop("YIELDIX_ALLOW_DEFAULT_TENANT", None)
         try:
             YieldixEngine()
             ok = False
@@ -287,6 +290,8 @@ def verify(tenant: str, as_json: bool):
         finally:
             if old is not None:
                 os.environ["YIELDIX_TENANT_ID"] = old
+            if old_allow is not None:
+                os.environ["YIELDIX_ALLOW_DEFAULT_TENANT"] = old_allow
         record("tenant_isolation_enforced", ok, detail)
     except Exception as e:  # pragma: no cover - diagnostic
         record("tenant_isolation_enforced", False, f"exception: {type(e).__name__}: {e}")
