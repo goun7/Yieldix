@@ -66,6 +66,35 @@ def test_cli_serve_no_block():
     assert "Starting Yieldix Cockpit on http://127.0.0.1:8995" in result.output
 
 
+# --- DALGA-C-2: CLI giris-dogrulama pin'leri (YIELDIX-CLI-1/2) ---
+
+def test_cli_simulate_runs_sifir_kullanim_hatasi_verir():
+    """YIELDIX-CLI-1: simulate --runs 0 numeric-argüman-hatası click rc=2 olmali
+    ( ham IndexError degil)."""
+    runner = CliRunner()
+    result = runner.invoke(main, ["simulate", "--runs", "0"])
+    assert result.exit_code == 2
+    assert isinstance(result.exception, SystemExit)
+    assert "SIMULATION RESULTS" not in result.output
+
+
+def test_cli_simulate_runs_negatif_kullanim_hatasi_verir():
+    """YIELDIX-CLI-2: --runs -5 numeric-argüman-hatasi rc=2."""
+    runner = CliRunner()
+    result = runner.invoke(main, ["simulate", "--runs", "-5"])
+    assert result.exit_code == 2
+    assert "SIMULATION RESULTS" not in result.output
+
+
+def test_cli_simulate_retainer_gecersiz_kullanim_hatasi_verir():
+    """YIELDIX-CLI-3: --retainer abc sayisal-degil → click rc=2
+    ( ham decimal.InvalidOperation degil)."""
+    runner = CliRunner()
+    result = runner.invoke(main, ["simulate", "--retainer", "abc"])
+    assert result.exit_code == 2
+    assert "SIMULATION RESULTS" not in result.output
+
+
 def test_cli_entrypoint_main():
     import runpy
     import sys

@@ -29,7 +29,7 @@ python3 -m pytest tests/                # 445-passed rc=0 (2026-10-16 LEED kendi
 ```bash
 # 1) Bağımsız-doğrulama — lead→pipeline→KPI→imzalı-rapor zincirini sıfırdan-oynar
 #    ve Ed25519-imzasını yeniden-teyit-eder ( kanıt-entegrasyonu)
-PYTHONPATH=src python3 -m yieldix.cli.main verify            # → SONUÇ: PASS — 5/5
+PYTHONPATH=src python3 -m yieldix.cli.main verify            # → SONUÇ: PASS — 9/9
 
 # 2) Makine-okunabilir-çıktı ( CI/entegrasyon-için)
 PYTHONPATH=src python3 -m yieldix.cli.main verify --json     # → {"verdict":"PASS",...}
@@ -44,7 +44,9 @@ PYTHONPATH=src python3 -m yieldix.cli.main status
 > `verify` çıkış-kodu: **0** = tüm-geçitler-sağlam, **1** = en-az-bir-bozuk.
 > Kontroller: `pipeline_runs_lead_to_cycle`, `signed_report_produced`,
 > `signature_verifies_and_tamper_resistant`, `tenant_isolation_enforced`,
-> `circuit_breaker_sheds_on_breach`.
+> `circuit_breaker_sheds_on_breach`, `pilot_dataset_cpl_sql_quantified`,
+> `report_digest_matches_payload`, `bant_scoring_is_structural`,
+> `cross_tenant_report_isolation`.
 
 ## Temel-API
 

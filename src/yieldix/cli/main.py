@@ -17,6 +17,25 @@ from yieldix.core.types import InboundLeadPayload, LeadSource, PipelineConfig
 from yieldix.telemetry.reporter import MonthlyReportGenerator
 
 
+# DALGA-C-2 (YIELDIX-CLI-3): click 8.5'te Decimal-parametre yoktur;.geçersiz
+# sayısal girdi ham decimal.InvalidOperation yerine click rc=2 olmalı.
+class _DecimalParam(click.ParamType):
+    """Geçerli bir Decimal'e çevirir; çevrilemezse UsageError (rc=2)."""
+
+    name = "decimal"
+
+    def convert(self, value, param, ctx):
+        if isinstance(value, Decimal):
+            return value
+        try:
+            return Decimal(str(value))
+        except Exception:
+            self.fail(f"{value!r} geçerli bir Decimal sayı değil", param, ctx)
+
+
+_DECIMAL_PARAM = _DecimalParam()
+
+
 @click.group()
 @click.version_option("16.0.0", prog_name="yieldix")
 def main():
@@ -56,11 +75,13 @@ def ingest(tenant: str, name: str, phone: str, intent: str):
 
 
 @main.command(name="simulate")
-@click.option("--runs", default=10000, help="Number of Monte Carlo simulation runs")
-@click.option("--retainer", default="2500.00", help="Monthly retainer in USD")
+@click.option("--runs", default=10000, type=click.IntRange(min=1),
+              help="Number of Monte Carlo simulation runs (>=1)")
+@click.option("--retainer", default="2500.00", type=_DECIMAL_PARAM,
+              help="Monthly retainer in USD")
 def simulate(runs: int, retainer: str | float):
     """Executes N=10,000 Monte Carlo financial stress simulation."""
-    retainer_dec = Decimal(str(retainer))
+    retainer_dec = retainer if isinstance(retainer, Decimal) else Decimal(str(retainer))
     click.echo(f"Running Monte Carlo simulation ({runs} runs, Retainer=${retainer_dec:.2f})...")
     profits = []
     base_cogs = Decimal("90.00")
