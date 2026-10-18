@@ -21,7 +21,7 @@ gerçekten-çalıştığını ve kim-ürettiğini kaydeder.
 ```bash
 cd yieldix
 pip install -e .                        # pydantic + cryptography
-python3 -m pytest tests/                # 445-passed rc=0 (2026-10-16 LEED kendi ölçümü, 10.05 s)
+python3 -m pytest tests/                # 481-passed rc=0 (2026-10-18 LEED kendi ölçümü, 6.70 s)
 ```
 
 ## ⏱️ In 30 seconds ( hızlı-bakış)
@@ -130,7 +130,7 @@ kullanır — iki ayrı canonicalization, iki ayrı amaç için.
 ## Test
 
 ```bash
-python3 -m pytest tests/ -q    # 445-passed rc=0 (2026-10-16 LEED ölçümü)
+python3 -m pytest tests/ -q    # 481-passed rc=0 (2026-10-18 LEED ölçümü)
 ```
 
 ## Sınırlar ( dürüst)
