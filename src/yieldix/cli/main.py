@@ -12,6 +12,7 @@ from decimal import Decimal
 
 import click
 
+from yieldix import __version__
 from yieldix.core.engine import YieldixEngine
 from yieldix.core.types import InboundLeadPayload, LeadSource, PipelineConfig
 from yieldix.telemetry.reporter import MonthlyReportGenerator
@@ -37,7 +38,7 @@ _DECIMAL_PARAM = _DecimalParam()
 
 
 @click.group()
-@click.version_option("16.0.0", prog_name="yieldix")
+@click.version_option(version=__version__, prog_name="yieldix")
 def main():
     """🦄 Yieldix: Autonomous B2B Revenue Engine CLI."""
 
